@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>To-Dos</title>
+    <script defer src="js/api.js"></script>
+    <script defer src="js/auth.js"></script>
+</head>
+<body onload="loadTodos()">
+<h1>Your Todos</h1>
+<ul id="todoList"></ul>
+
+<input id="newTodo" placeholder="New Todo" />
+<button onclick="addTodo()">Add</button>
+
+<button onclick="logout()">Logout</button>
+</body>
+</html>
