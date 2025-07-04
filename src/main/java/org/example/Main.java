@@ -14,12 +14,15 @@ import org.example.handlers.AuthHandler;
 import org.example.handlers.TodoHandler;
 import org.example.middleware.JWTMiddleware;
 import org.example.worker.EmailWorkerVerticle;
+import org.example.worker.ReminderWorkerVerticle;
 
 public class Main extends AbstractVerticle {
 
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
         vertx.deployVerticle(new Main());
+        vertx.deployVerticle(new ReminderWorkerVerticle());
+
     }
 
     @Override
@@ -38,7 +41,12 @@ public class Main extends AbstractVerticle {
         // Auth routes
         router.post("/register").handler(authHandler::handleRegister);
         router.post("/login").handler(authHandler::handleLogin);
-        router.post("/logout").handler(jwtMiddleware.handle()).handler(authHandler::handleLogout);
+
+        router.post("/logout")
+                .handler(jwtMiddleware.handle())
+                .handler(authHandler::handleLogout);
+        router.post("/refresh-token").handler(jwtMiddleware.handle()).handler(authHandler::handleRefreshToken);
+
 
         router.post("/reset-password").handler(authHandler::handleResetPassword);
 
@@ -58,8 +66,13 @@ public class Main extends AbstractVerticle {
         vertx.createHttpServer().requestHandler(router).listen(8888, res -> {
             if (res.succeeded()) {
                 System.out.println("✅ Server started on port 8888");
+
+                // Console links for UI pages
+
+                System.out.println("🔗 Register Page:     http://localhost:8888/web/register.html");
+
             } else {
-                System.err.println("failed to start server: " +res.cause());
+                System.err.println("❌ Failed to start server: " + res.cause());
             }
         });
     }

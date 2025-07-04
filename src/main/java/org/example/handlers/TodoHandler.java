@@ -79,4 +79,13 @@ public class TodoHandler {
             }
         });
     }
+    public void markComplete(RoutingContext ctx) {
+        String id = ctx.pathParam("id");
+        boolean complete = Boolean.parseBoolean(ctx.request().getParam("complete"));
+
+        mongo.updateCollection("todos",
+                new JsonObject().put("_id", id),
+                new JsonObject().put("$set", new JsonObject().put("completed", complete).put("updatedAt", System.currentTimeMillis())),
+                res -> ctx.response().end("Updated task status"));
+    }
 }

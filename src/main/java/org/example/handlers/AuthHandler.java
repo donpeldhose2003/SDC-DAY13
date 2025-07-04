@@ -79,11 +79,16 @@ public class AuthHandler {
                 if (PasswordUtil.verifyPassword(password, hashedPassword)) {
                     String token = JwtUtil.generateToken(email);
 
-                    // ✅ FIXED: Redis requires a list of strings, not two args
-                    redis.set(Arrays.asList("token:" + token, "valid"), r -> {});
+                    // ✅ Store token in Redis
+                    redis.set(Arrays.asList("token:" + token, "valid"), r -> {
+                        if (r.succeeded()) {
+                            ctx.response().putHeader("Content-Type", "application/json")
+                                    .end(new JsonObject().put("token", token).encode());
+                        } else {
+                            ctx.response().setStatusCode(500).end("Token storage failed");
+                        }
+                    });
 
-                    ctx.response().putHeader("Content-Type", "application/json")
-                            .end(new JsonObject().put("token", token).encode());
                 } else {
                     ctx.response().setStatusCode(401).end("Invalid credentials");
                 }
@@ -93,14 +98,16 @@ public class AuthHandler {
         });
     }
 
+
     // ----------------- Logout -----------------
     public void handleLogout(RoutingContext ctx) {
-        String token = ctx.user().principal().getString("token");
-
-        // ✅ FIXED: must be list, not string
-        redis.del(Collections.singletonList("token:" + token), r -> {});
+        String token = ctx.get("token"); // make sure JWTMiddleware puts this in ctx
+        if (token != null) {
+            redis.del(Arrays.asList("token:" + token), r -> {});
+        }
         ctx.response().end("Logged out");
     }
+
 
     // ----------------- Password Reset -----------------
     public void handleResetPassword(RoutingContext ctx) {
@@ -124,4 +131,24 @@ public class AuthHandler {
             }
         });
     }
+    public void handleRefreshToken(RoutingContext ctx) {
+        String token = ctx.get("token");
+        String email = JwtUtil.extractEmail(token);
+
+        if (!JwtUtil.verifyToken(token)) {
+            ctx.response().setStatusCode(401).end("Invalid token");
+            return;
+        }
+
+        if (!JwtUtil.isTokenExpiringSoon(token)) {
+            ctx.response().end("Token still valid");
+            return;
+        }
+
+        String newToken = JwtUtil.generateToken(email);
+        redis.set(Arrays.asList("token:" + newToken, "valid"), r -> {});
+        ctx.response().putHeader("Content-Type", "application/json")
+                .end(new JsonObject().put("token", newToken).encode());
+    }
+
 }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - To-Do App</title>
+    <script defer src="js/api.js"></script>
+</head>
+<body onload="loadTodos()">
+<h2>Your To-Do List</h2>
+<button onclick="logout()">Logout</button>
+
+<h3>Add New Task</h3>
+<input id="title" placeholder="Title" />
+<input id="desc" placeholder="Description" />
+<input id="due" type="date" />
+<select id="priority">
+    <option value="low">Low</option>
+    <option value="normal" selected>Normal</option>
+    <option value="high">High</option>
+</select>
+<button onclick="addTodo()">Add Task</button>
+
+<h3>Tasks</h3>
+<ul id="taskList"></ul>
+</body>
+</html>
